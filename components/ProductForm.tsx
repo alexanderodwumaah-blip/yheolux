@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Product } from "@/lib/types";
+import { Product, CATEGORY_TREE } from "@/lib/types";
 import ImageUploader from "@/components/ImageUploader";
 
 type Props = {
@@ -13,8 +13,14 @@ type Props = {
 
 export default function ProductForm({ initial, productId }: Props) {
   const router = useRouter();
+
+  const defaultMain = initial?.main_category || Object.keys(CATEGORY_TREE)[0];
+  const defaultSub =
+    initial?.category || CATEGORY_TREE[defaultMain]?.[0] || "";
+
   const [name, setName] = useState(initial?.name || "");
-  const [category, setCategory] = useState(initial?.category || "General");
+  const [mainCategory, setMainCategory] = useState(defaultMain);
+  const [category, setCategory] = useState(defaultSub);
   const [description, setDescription] = useState(initial?.description || "");
   const [originalPrice, setOriginalPrice] = useState(
     initial?.original_price?.toString() || ""
@@ -29,6 +35,14 @@ export default function ProductForm({ initial, productId }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const subCategories = CATEGORY_TREE[mainCategory] || [];
+
+  function handleMainChange(main: string) {
+    setMainCategory(main);
+    // reset sub to first option of new main
+    setCategory(CATEGORY_TREE[main]?.[0] || "");
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -41,7 +55,8 @@ export default function ProductForm({ initial, productId }: Props) {
     setSaving(true);
     const payload = {
       name: name.trim(),
-      category: category.trim() || "General",
+      main_category: mainCategory,
+      category: category || mainCategory,
       description: description.trim(),
       original_price: originalPrice ? Number(originalPrice) : null,
       selling_price: Number(sellingPrice),
@@ -68,9 +83,7 @@ export default function ProductForm({ initial, productId }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="mb-1 block text-sm text-ivory/70">
-          Product name
-        </label>
+        <label className="mb-1 block text-sm text-ivory/70">Product name</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -78,19 +91,44 @@ export default function ProductForm({ initial, productId }: Props) {
         />
       </div>
 
-      <div>
-        <label className="mb-1 block text-sm text-ivory/70">Category</label>
-        <input
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full rounded-lg border border-gold-500/30 bg-emerald-950/60 px-4 py-2.5 text-ivory focus:border-gold-400"
-        />
+      {/* Category */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-sm text-ivory/70">
+            Main category
+          </label>
+          <select
+            value={mainCategory}
+            onChange={(e) => handleMainChange(e.target.value)}
+            className="w-full rounded-lg border border-gold-500/30 bg-emerald-950/60 px-4 py-2.5 text-ivory focus:border-gold-400"
+          >
+            {Object.keys(CATEGORY_TREE).map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-ivory/70">
+            Sub-category
+          </label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full rounded-lg border border-gold-500/30 bg-emerald-950/60 px-4 py-2.5 text-ivory focus:border-gold-400"
+          >
+            {subCategories.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div>
-        <label className="mb-1 block text-sm text-ivory/70">
-          Description
-        </label>
+        <label className="mb-1 block text-sm text-ivory/70">Description</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -129,7 +167,7 @@ export default function ProductForm({ initial, productId }: Props) {
 
       <div>
         <label className="mb-1 block text-sm text-ivory/70">
-          Seller phone (WhatsApp / call number for this product's orders)
+          Seller phone (WhatsApp / call number for this product&apos;s orders)
         </label>
         <input
           value={sellerPhone}

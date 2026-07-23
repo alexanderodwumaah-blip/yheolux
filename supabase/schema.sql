@@ -37,7 +37,8 @@ create table if not exists products (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   description text not null default '',
-  category text not null default 'General',
+  main_category text not null default 'Fashion',   -- top-level: Fashion, Accessories, etc.
+  category text not null default 'General',         -- sub-category: Bags, Clothing, Jewellery, etc.
   original_price numeric(10,2),      -- optional "was" price, shown struck-through
   selling_price numeric(10,2) not null,
   seller_phone text not null,        -- WhatsApp / call number for this product's orders
@@ -127,6 +128,12 @@ drop policy if exists "admin update orders" on orders;
 create policy "admin update orders" on orders
   for update using (exists (select 1 from admin_profiles where id = auth.uid()));
 
+-- Explicitly grant INSERT on orders to the anon role so unauthenticated
+-- buyers can place orders (RLS policy alone is not enough if table-level
+-- privileges were not granted when the table was created outside Supabase UI).
+grant insert on table orders to anon;
+grant insert on table subscribers to anon;
+
 -- subscribers: anyone can sign up, only admins can read the list
 drop policy if exists "public can subscribe" on subscribers;
 create policy "public can subscribe" on subscribers
@@ -164,12 +171,13 @@ create policy "admin delete product images" on storage.objects
 -- ============================================================
 -- SEED PRODUCTS (the two starter products from the brief)
 -- ============================================================
-insert into products (name, description, category, original_price, selling_price, seller_phone, images, featured)
+insert into products (name, description, main_category, category, original_price, selling_price, seller_phone, images, featured)
 values
 (
   'The Island Muse Tote & Clutch Set',
   'A tropical, bohemian art-print tote paired with a matching small clutch. Durable canvas construction with a secure zipper closure — a statement piece that carries everything you need in style.',
-  'Bags & Totes',
+  'Fashion',
+  'Bags',
   350.00,
   259.00,
   '233241234567',
@@ -179,7 +187,8 @@ values
 (
   'The "Queen of Rhythm" Artisan Clutch',
   'A rich, high-definition portrait tote featuring a woman in profile wearing a multicolored patterned headwrap and traditional layered beads, set against a warm burnt-orange background. Durable woven-texture fabric with a smooth top zipper — ideal for daily essentials or a special occasion.',
-  'Bags & Totes',
+  'Fashion',
+  'Bags',
   320.00,
   239.00,
   '233241234567',
@@ -187,6 +196,15 @@ values
   true
 )
 on conflict do nothing;
+
+-- Migrate any existing products that still use old category values
+-- (safe to run even if no old data exists)
+update products set main_category = 'Fashion', category = 'Bags'
+  where category in ('Bags & Totes', 'Bags') and main_category is null;
+update products set main_category = 'Fashion', category = 'Clothing'
+  where category in ('Clothing', 'Clothes') and main_category is null;
+update products set main_category = 'Fashion'
+  where main_category is null;
 
 -- ============================================================
 -- HOW TO MAKE YOURSELF AN ADMIN

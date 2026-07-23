@@ -2,6 +2,7 @@ export type Product = {
   id: string;
   name: string;
   description: string;
+  main_category: string;
   category: string;
   original_price: number | null;
   selling_price: number;
@@ -10,6 +11,12 @@ export type Product = {
   in_stock: boolean;
   featured: boolean;
   created_at: string;
+};
+
+/** The fixed category tree for YHEOLUX.
+ *  main_category → subcategories shown in the shop sidebar/filter. */
+export const CATEGORY_TREE: Record<string, string[]> = {
+  Fashion: ["Bags", "Clothing"],
 };
 
 export type DeliveryLocation = {

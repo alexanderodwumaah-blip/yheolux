@@ -3,14 +3,18 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { Product } from "@/lib/types";
+import { Product, CATEGORY_TREE } from "@/lib/types";
 import ProductCard from "@/components/ProductCard";
 import InstallPrompt from "@/components/InstallPrompt";
+
+const ALL = "All";
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [activeMain, setActiveMain] = useState(ALL);
+  const [activeSub, setActiveSub] = useState(ALL);
 
   useEffect(() => {
     let active = true;
@@ -24,14 +28,49 @@ export default function HomePage() {
           setLoading(false);
         }
       });
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
 
-  const filtered = products.filter((p) =>
-    (p.name + p.category).toLowerCase().includes(query.toLowerCase())
-  );
+  // When main category changes, reset sub-category
+  function handleMainClick(main: string) {
+    setActiveMain(main);
+    setActiveSub(ALL);
+  }
+
+  // Derive which sub-categories actually have products in the active main
+  const availableSubs: string[] =
+    activeMain !== ALL
+      ? [
+          ALL,
+          ...Array.from(
+            new Set(
+              products
+                .filter((p) => p.main_category === activeMain)
+                .map((p) => p.category)
+            )
+          ),
+        ]
+      : [];
+
+  const filtered = products.filter((p) => {
+    const matchesSearch = (p.name + p.category + p.main_category)
+      .toLowerCase()
+      .includes(query.toLowerCase());
+    const matchesMain = activeMain === ALL || p.main_category === activeMain;
+    const matchesSub = activeSub === ALL || p.category === activeSub;
+    return matchesSearch && matchesMain && matchesSub;
+  });
+
+  // Main category tabs: "All" + every distinct main_category from products + defined tree
+  const mainCats = [
+    ALL,
+    ...Array.from(
+      new Set([
+        ...Object.keys(CATEGORY_TREE),
+        ...products.map((p) => p.main_category).filter(Boolean),
+      ])
+    ),
+  ];
 
   return (
     <div>
@@ -83,7 +122,8 @@ export default function HomePage() {
 
       {/* SHOP */}
       <section id="shop" className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-        <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+        {/* Header row */}
+        <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <p className="text-xs uppercase tracking-widest text-gold-400">
               The Collection
@@ -101,6 +141,43 @@ export default function HomePage() {
           />
         </div>
 
+        {/* Main category tabs */}
+        <div className="mb-4 flex flex-wrap gap-2">
+          {mainCats.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => handleMainClick(cat)}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                activeMain === cat
+                  ? "bg-gold-500 text-emerald-950"
+                  : "border border-gold-500/30 text-ivory/70 hover:border-gold-400 hover:text-gold-300"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Sub-category pills — only shown when a main cat is selected */}
+        {availableSubs.length > 1 && (
+          <div className="mb-6 flex flex-wrap gap-2">
+            {availableSubs.map((sub) => (
+              <button
+                key={sub}
+                onClick={() => setActiveSub(sub)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  activeSub === sub
+                    ? "bg-gold-500/20 text-gold-300 border border-gold-400"
+                    : "border border-gold-500/20 text-ivory/50 hover:border-gold-500/50 hover:text-ivory/80"
+                }`}
+              >
+                {sub}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Product grid */}
         {loading ? (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -112,7 +189,9 @@ export default function HomePage() {
           </div>
         ) : filtered.length === 0 ? (
           <p className="rounded-xl border border-gold-500/15 bg-emerald-950/50 p-10 text-center text-ivory/60">
-            No products found. Check back soon — new arrivals are on the way.
+            {query
+              ? `No products match "${query}".`
+              : "No products in this category yet — check back soon."}
           </p>
         ) : (
           <div className="stagger grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">

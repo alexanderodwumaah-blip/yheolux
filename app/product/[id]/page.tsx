@@ -91,6 +91,13 @@ export default function ProductPage() {
         <Link href="/" className="hover:text-gold-400">
           Shop
         </Link>{" "}
+        /{" "}
+        <button
+          onClick={() => router.push(`/?main=${product.main_category}`)}
+          className="hover:text-gold-400"
+        >
+          {product.main_category}
+        </button>{" "}
         / <span className="text-ivory/70">{product.category}</span>
       </nav>
 
@@ -134,7 +141,7 @@ export default function ProductPage() {
         {/* Details */}
         <div>
           <p className="text-xs uppercase tracking-widest text-gold-400">
-            {product.category}
+            {product.main_category} · {product.category}
           </p>
           <h1 className="mt-1 font-display text-3xl text-ivory">
             {product.name}

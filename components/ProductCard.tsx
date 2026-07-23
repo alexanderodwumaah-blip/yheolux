@@ -34,7 +34,7 @@ export default function ProductCard({ product }: { product: Product }) {
       </div>
       <div className="flex flex-1 flex-col gap-1 p-4">
         <span className="text-xs uppercase tracking-widest text-gold-400/80">
-          {product.category}
+          {product.main_category} · {product.category}
         </span>
         <h3 className="font-display text-base leading-snug text-ivory">
           {product.name}
