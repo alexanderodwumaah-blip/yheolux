@@ -12,14 +12,12 @@ html {
 }
 
 body {
-  background-color: #0B3D2E;
+  background-color: #071F17;
   color: #F7F2E7;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *,*::before,*::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
@@ -27,55 +25,160 @@ body {
   }
 }
 
-/* Visible keyboard focus everywhere */
-a:focus-visible,
-button:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
+/* Focus ring */
+a:focus-visible,button:focus-visible,input:focus-visible,
+textarea:focus-visible,select:focus-visible {
   outline: 2px solid #D9B44A;
   outline-offset: 2px;
   border-radius: 2px;
 }
 
+/* ── Dividers ── */
 .gold-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, #C9A227, transparent);
+  background: linear-gradient(90deg, transparent, #C9A227 40%, #E8CE7A 50%, #C9A227 60%, transparent);
 }
 
+/* ── Coin badge ── */
 .coin-badge {
-  background: radial-gradient(circle at 35% 30%, #E8CE7A, #C9A227 55%, #A6821C 100%);
-  box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.5), 0 6px 16px rgba(0, 0, 0, 0.35);
+  background: radial-gradient(circle at 35% 30%, #F0DC8A, #C9A227 55%, #8A6A10 100%);
+  box-shadow:
+    0 0 0 2px rgba(201,162,39,0.4),
+    0 0 20px rgba(201,162,39,0.25),
+    0 8px 24px rgba(0,0,0,0.45);
 }
 
+/* ── Cards ── */
 .card-hover {
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+  transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease, border-color 0.4s ease;
 }
 .card-hover:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(201, 162, 39, 0.35);
+  transform: translateY(-8px) scale(1.01);
+  box-shadow:
+    0 24px 48px -12px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(201,162,39,0.4),
+    0 0 30px rgba(201,162,39,0.08);
 }
 
+/* ── Shimmer hero text ── */
 .shimmer-text {
-  background: linear-gradient(90deg, #D9B44A 0%, #F7EFD3 20%, #D9B44A 40%, #D9B44A 100%);
-  background-size: 200% auto;
+  background: linear-gradient(
+    100deg,
+    #A6821C 0%,
+    #D9B44A 20%,
+    #F7EFD3 35%,
+    #FFE88A 42%,
+    #D9B44A 55%,
+    #A6821C 100%
+  );
+  background-size: 250% auto;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
+/* ── Stagger grid entrance ── */
 .stagger > * {
   opacity: 0;
-  animation: fadeUp 0.6s ease forwards;
+  animation: fadeUp 0.65s cubic-bezier(0.22,1,0.36,1) forwards;
 }
-.stagger > *:nth-child(1) { animation-delay: 0.05s; }
-.stagger > *:nth-child(2) { animation-delay: 0.12s; }
-.stagger > *:nth-child(3) { animation-delay: 0.19s; }
-.stagger > *:nth-child(4) { animation-delay: 0.26s; }
-.stagger > *:nth-child(5) { animation-delay: 0.33s; }
-.stagger > *:nth-child(6) { animation-delay: 0.4s; }
+.stagger > *:nth-child(1)  { animation-delay: 0.04s; }
+.stagger > *:nth-child(2)  { animation-delay: 0.10s; }
+.stagger > *:nth-child(3)  { animation-delay: 0.16s; }
+.stagger > *:nth-child(4)  { animation-delay: 0.22s; }
+.stagger > *:nth-child(5)  { animation-delay: 0.28s; }
+.stagger > *:nth-child(6)  { animation-delay: 0.34s; }
+.stagger > *:nth-child(7)  { animation-delay: 0.40s; }
+.stagger > *:nth-child(8)  { animation-delay: 0.46s; }
 
+/* ── Keyframes ── */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+
+@keyframes shimmerSlide {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+@keyframes floatSlow {
+  0%,100% { transform: translateY(0) scale(1); }
+  50%     { transform: translateY(-14px) scale(1.02); }
+}
+
+@keyframes pulseGlow {
+  0%,100% { box-shadow: 0 0 0 0 rgba(201,162,39,0.4); }
+  50%     { box-shadow: 0 0 0 12px rgba(201,162,39,0); }
+}
+
+@keyframes rotateSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Glass morphism panels ── */
+.glass-panel {
+  background: rgba(7,31,23,0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(201,162,39,0.15);
+}
+
+/* ── Gold glow button ── */
+.btn-gold {
+  background: linear-gradient(135deg, #D9B44A 0%, #C9A227 50%, #A6821C 100%);
+  box-shadow: 0 4px 20px rgba(201,162,39,0.35);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.btn-gold:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 30px rgba(201,162,39,0.5);
+}
+.btn-gold:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* ── Luxury badge ── */
+.luxury-badge {
+  background: linear-gradient(135deg, #C9A227, #E8CE7A, #C9A227);
+  background-size: 200% auto;
+  animation: shimmerSlide 3s linear infinite;
+}
+
+/* ── Image zoom on hover ── */
+.img-zoom {
+  overflow: hidden;
+}
+.img-zoom img, .img-zoom > div > img {
+  transition: transform 0.7s cubic-bezier(0.22,1,0.36,1);
+}
+.img-zoom:hover img, .img-zoom:hover > div > img {
+  transform: scale(1.08);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #071F17; }
+::-webkit-scrollbar-thumb { background: rgba(201,162,39,0.4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(201,162,39,0.7); }
+
+/* ── Section entrance animation helper ── */
+.animate-fadeUp    { animation: fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) forwards; }
+.animate-scaleIn   { animation: scaleIn 0.6s cubic-bezier(0.22,1,0.36,1) forwards; }
+.animate-slideLeft { animation: slideInLeft 0.6s cubic-bezier(0.22,1,0.36,1) forwards; }
