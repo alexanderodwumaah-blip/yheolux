@@ -180,7 +180,7 @@ values
   'Bags',
   110.00,
   74.99,
-  '233241234567',
+  '233541901749',
   array['/products/island-muse-tote.png', '/products/island-muse-clutch.png', '/products/island-muse-tote-set.png'],
   true
 ),
@@ -191,7 +191,7 @@ values
   'Bags',
   99.00,
   74.99,
-  '233241234567',
+  '233541901749',
   array['/products/queen-of-rhythm-clutch.png', '/products/queen-of-rhythm-tote-set.png'],
   true
 )
@@ -207,6 +207,7 @@ set
   selling_price  = 74.99,
   main_category  = 'Fashion',
   category       = 'Bags',
+  seller_phone   = '233541901749',
   images         = array['/products/island-muse-tote.png', '/products/island-muse-clutch.png', '/products/island-muse-tote-set.png']
 where name = 'The Island Muse Tote & Clutch Set';
 
@@ -216,6 +217,7 @@ set
   selling_price  = 74.99,
   main_category  = 'Fashion',
   category       = 'Bags',
+  seller_phone   = '233541901749',
   images         = array['/products/queen-of-rhythm-clutch.png', '/products/queen-of-rhythm-tote-set.png']
 where name ilike '%Queen of Rhythm%';
 

@@ -157,10 +157,11 @@ export default function AdminLoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPw((s) => !s)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-ivory/40 hover:text-ivory/80 transition-colors text-sm"
-                    aria-label="Toggle password visibility"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center
+                      rounded-lg text-lg text-ivory/40 transition-all hover:bg-emerald-800/50 hover:text-ivory/80"
+                    aria-label={showPw ? "Hide password" : "Show password"}
                   >
-                    {showPw ? "Hide" : "Show"}
+                    {showPw ? "🙈" : "👁️"}
                   </button>
                 </div>
               </div>
