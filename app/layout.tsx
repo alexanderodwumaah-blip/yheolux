@@ -35,9 +35,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0B3D2E",
+  themeColor: "#071F17",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -47,10 +48,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
-      <body className="font-body bg-emerald-900 bg-emerald-texture min-h-screen antialiased">
+      <body className="font-body bg-emerald-950 bg-emerald-texture min-h-screen antialiased overflow-x-hidden">
         <CartProvider>
           <Header />
-          <main>{children}</main>
+          <main className="min-h-screen">{children}</main>
           <Footer />
         </CartProvider>
       </body>
