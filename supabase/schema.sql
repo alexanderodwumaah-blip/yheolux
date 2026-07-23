@@ -169,19 +169,19 @@ create policy "admin delete product images" on storage.objects
   );
 
 -- ============================================================
--- SEED PRODUCTS (the two starter products from the brief)
+-- SEED PRODUCTS
 -- ============================================================
 insert into products (name, description, main_category, category, original_price, selling_price, seller_phone, images, featured)
 values
 (
   'The Island Muse Tote & Clutch Set',
-  'A tropical, bohemian art-print tote paired with a matching small clutch. Durable canvas construction with a secure zipper closure — a statement piece that carries everything you need in style.',
+  'A tropical, bohemian art-print tote paired with a matching small clutch. Bold African art print on durable canvas with rope handles and tassel detail. Comes with a matching zip clutch — a statement set that carries everything you need in style.',
   'Fashion',
   'Bags',
-  350.00,
-  259.00,
+  110.00,
+  74.99,
   '233241234567',
-  array['/products/island-muse-tote.png'],
+  array['/products/island-muse-tote.png', '/products/island-muse-clutch.png', '/products/island-muse-tote-set.png'],
   true
 ),
 (
@@ -189,22 +189,43 @@ values
   'A rich, high-definition portrait tote featuring a woman in profile wearing a multicolored patterned headwrap and traditional layered beads, set against a warm burnt-orange background. Durable woven-texture fabric with a smooth top zipper — ideal for daily essentials or a special occasion.',
   'Fashion',
   'Bags',
-  320.00,
-  239.00,
+  99.00,
+  74.99,
   '233241234567',
-  array['/products/queen-of-rhythm-clutch.png'],
+  array['/products/queen-of-rhythm-clutch.png', '/products/queen-of-rhythm-tote-set.png'],
   true
 )
 on conflict do nothing;
 
--- Migrate any existing products that still use old category values
--- (safe to run even if no old data exists)
+-- ============================================================
+-- UPDATE EXISTING LIVE RECORDS (run this if products already exist)
+-- Fixes prices, categories, and adds multiple images
+-- ============================================================
+update products
+set
+  original_price = 110.00,
+  selling_price  = 74.99,
+  main_category  = 'Fashion',
+  category       = 'Bags',
+  images         = array['/products/island-muse-tote.png', '/products/island-muse-clutch.png', '/products/island-muse-tote-set.png']
+where name = 'The Island Muse Tote & Clutch Set';
+
+update products
+set
+  original_price = 99.00,
+  selling_price  = 74.99,
+  main_category  = 'Fashion',
+  category       = 'Bags',
+  images         = array['/products/queen-of-rhythm-clutch.png', '/products/queen-of-rhythm-tote-set.png']
+where name ilike '%Queen of Rhythm%';
+
+-- Migrate any other existing products with old category format
 update products set main_category = 'Fashion', category = 'Bags'
-  where category in ('Bags & Totes', 'Bags') and main_category is null;
+  where category in ('Bags & Totes') and (main_category is null or main_category = '');
 update products set main_category = 'Fashion', category = 'Clothing'
-  where category in ('Clothing', 'Clothes') and main_category is null;
+  where category in ('Clothing', 'Clothes') and (main_category is null or main_category = '');
 update products set main_category = 'Fashion'
-  where main_category is null;
+  where (main_category is null or main_category = '');
 
 -- ============================================================
 -- HOW TO MAKE YOURSELF AN ADMIN

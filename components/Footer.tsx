@@ -93,6 +93,12 @@ export default function Footer() {
             </Link>
           </div>
         </div>
+
+        {/* Developer credit */}
+        <p className="mt-6 text-center text-[11px] text-ivory/20">
+          Developed by{" "}
+          <span className="text-gold-600/60 font-medium">Alexander Opoku Dwumaah</span>
+        </p>
       </div>
     </footer>
   );
