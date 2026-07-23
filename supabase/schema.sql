@@ -1,0 +1,201 @@
+-- ============================================================
+-- YHEOLUX  —  Supabase schema
+-- Run this once in Supabase: Dashboard -> SQL Editor -> New query -> Run
+-- ============================================================
+
+create extension if not exists "pgcrypto";
+
+-- ---------- ADMIN PROFILES ----------
+-- Every row here marks a Supabase Auth user as an admin allowed into /admin.
+-- After an admin signs up (via /admin/signup) you MUST add a row here yourself
+-- (or run the promote statement at the bottom) before they can log in to the dashboard.
+create table if not exists admin_profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  full_name text,
+  created_at timestamptz not null default now()
+);
+
+-- ---------- DELIVERY LOCATIONS ----------
+create table if not exists delivery_locations (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  active boolean not null default true,
+  sort_order int not null default 0
+);
+
+insert into delivery_locations (name, sort_order) values
+  ('Akuse', 1),
+  ('Asutuarey', 2),
+  ('Kpong', 3),
+  ('Agormanya', 4),
+  ('Somanya', 5),
+  ('Natriku', 6)
+on conflict (name) do nothing;
+
+-- ---------- PRODUCTS ----------
+create table if not exists products (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text not null default '',
+  category text not null default 'General',
+  original_price numeric(10,2),      -- optional "was" price, shown struck-through
+  selling_price numeric(10,2) not null,
+  seller_phone text not null,        -- WhatsApp / call number for this product's orders
+  images text[] not null default '{}', -- up to 4 image URLs (Supabase Storage public URLs)
+  in_stock boolean not null default true,
+  featured boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists products_created_at_idx on products (created_at desc);
+
+-- ---------- ORDERS ----------
+create table if not exists orders (
+  id uuid primary key default gen_random_uuid(),
+  buyer_name text not null,
+  buyer_phone text not null,
+  delivery_location text not null,
+  payment_option text not null check (payment_option in ('preorder', 'pay_on_delivery')),
+  contact_method text not null check (contact_method in ('whatsapp', 'call')),
+  items jsonb not null,              -- [{product_id, name, selling_price, qty, image}]
+  total numeric(10,2) not null default 0,
+  payment_made boolean not null default false,
+  delivered boolean not null default false,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists orders_created_at_idx on orders (created_at desc);
+
+-- ---------- NEWSLETTER SUBSCRIBERS ----------
+create table if not exists subscribers (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  created_at timestamptz not null default now()
+);
+
+-- ============================================================
+-- ROW LEVEL SECURITY
+-- ============================================================
+
+alter table admin_profiles enable row level security;
+alter table delivery_locations enable row level security;
+alter table products enable row level security;
+alter table orders enable row level security;
+alter table subscribers enable row level security;
+
+-- admin_profiles: an admin can read their own row (used to gate the dashboard)
+drop policy if exists "admin can read own profile" on admin_profiles;
+create policy "admin can read own profile" on admin_profiles
+  for select using (auth.uid() = id);
+
+drop policy if exists "user can insert own pending profile" on admin_profiles;
+create policy "user can insert own pending profile" on admin_profiles
+  for insert with check (auth.uid() = id);
+
+-- delivery_locations: public read
+drop policy if exists "public read locations" on delivery_locations;
+create policy "public read locations" on delivery_locations
+  for select using (true);
+
+drop policy if exists "admin manage locations" on delivery_locations;
+create policy "admin manage locations" on delivery_locations
+  for all using (exists (select 1 from admin_profiles where id = auth.uid()))
+  with check (exists (select 1 from admin_profiles where id = auth.uid()));
+
+-- products: public read, admin write
+drop policy if exists "public read products" on products;
+create policy "public read products" on products
+  for select using (true);
+
+drop policy if exists "admin manage products" on products;
+create policy "admin manage products" on products
+  for all using (exists (select 1 from admin_profiles where id = auth.uid()))
+  with check (exists (select 1 from admin_profiles where id = auth.uid()));
+
+-- orders: anyone (even signed-out buyers) can create an order.
+-- Only admins can read / update the order list (so buyers can't see each other's orders).
+drop policy if exists "public can place order" on orders;
+create policy "public can place order" on orders
+  for insert with check (true);
+
+drop policy if exists "admin read orders" on orders;
+create policy "admin read orders" on orders
+  for select using (exists (select 1 from admin_profiles where id = auth.uid()));
+
+drop policy if exists "admin update orders" on orders;
+create policy "admin update orders" on orders
+  for update using (exists (select 1 from admin_profiles where id = auth.uid()));
+
+-- subscribers: anyone can sign up, only admins can read the list
+drop policy if exists "public can subscribe" on subscribers;
+create policy "public can subscribe" on subscribers
+  for insert with check (true);
+
+drop policy if exists "admin read subscribers" on subscribers;
+create policy "admin read subscribers" on subscribers
+  for select using (exists (select 1 from admin_profiles where id = auth.uid()));
+
+-- ============================================================
+-- STORAGE (product images)
+-- ============================================================
+insert into storage.buckets (id, name, public)
+values ('product-images', 'product-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "public read product images" on storage.objects;
+create policy "public read product images" on storage.objects
+  for select using (bucket_id = 'product-images');
+
+drop policy if exists "admin upload product images" on storage.objects;
+create policy "admin upload product images" on storage.objects
+  for insert with check (
+    bucket_id = 'product-images'
+    and exists (select 1 from admin_profiles where id = auth.uid())
+  );
+
+drop policy if exists "admin delete product images" on storage.objects;
+create policy "admin delete product images" on storage.objects
+  for delete using (
+    bucket_id = 'product-images'
+    and exists (select 1 from admin_profiles where id = auth.uid())
+  );
+
+-- ============================================================
+-- SEED PRODUCTS (the two starter products from the brief)
+-- ============================================================
+insert into products (name, description, category, original_price, selling_price, seller_phone, images, featured)
+values
+(
+  'The Island Muse Tote & Clutch Set',
+  'A tropical, bohemian art-print tote paired with a matching small clutch. Durable canvas construction with a secure zipper closure — a statement piece that carries everything you need in style.',
+  'Bags & Totes',
+  350.00,
+  259.00,
+  '233241234567',
+  array['/products/island-muse-tote.png'],
+  true
+),
+(
+  'The "Queen of Rhythm" Artisan Clutch',
+  'A rich, high-definition portrait tote featuring a woman in profile wearing a multicolored patterned headwrap and traditional layered beads, set against a warm burnt-orange background. Durable woven-texture fabric with a smooth top zipper — ideal for daily essentials or a special occasion.',
+  'Bags & Totes',
+  320.00,
+  239.00,
+  '233241234567',
+  array['/products/queen-of-rhythm-clutch.png'],
+  true
+)
+on conflict do nothing;
+
+-- ============================================================
+-- HOW TO MAKE YOURSELF AN ADMIN
+-- ============================================================
+-- 1. Go to your site's /admin/signup page and create an account (email + password).
+-- 2. Come back here and run the statement below, replacing the email:
+--
+--   insert into admin_profiles (id, full_name)
+--   select id, 'Store Admin' from auth.users where email = 'you@example.com'
+--   on conflict (id) do nothing;
+--
+-- 3. Log in at /admin/login.
